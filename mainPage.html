@@ -7,9 +7,20 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <script>
+    function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+    }
+  </script>
 </head>
 <body>
-    <div class="topnav">
+    <div class="topnav" id="myTopnav">
         <a class="active" href="#listNehnutelnosti"><i class ="fa fa-list"> </i> Nehnutelnosti</a>
         <a href="#pridanie"><i class ="fa fa-plus-circle"> </i> Pridať</a>
         <a href="#oblubene"><i class ="fa fa-thumbs-up"> </i> Obľúbené</a>
@@ -17,6 +28,9 @@
             <a href="#registracia"><i class ="fa fa-user-plus"> </i> Registrácia</a>
             <a href="#prihlasenie"><i class="fa fa-fw fa-user"></i> Prihlásenie</a>
         </div>  
+        <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+            <i class="fa fa-bars"></i>
+        </a>
     </div>
     <div class="container" style="max-width: 100%;">
         <img src="images/house2.jpg" alt="House" class="responsiveImage">
