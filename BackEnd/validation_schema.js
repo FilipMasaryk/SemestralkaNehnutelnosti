@@ -1,17 +1,17 @@
 const Joi = require('joi');
 
 const addMemberSchema = Joi.object({
-    name: Joi.string().required().min(1),
-    password: Joi.string().required().min(1)
+    name: Joi.string().required().min(3),
+    password: Joi.string().required().min(5)
 });
 
 const updateMemberSchema = Joi.object({
-    name: Joi.string().required().min(1),
+    name: Joi.string().required().min(3),
 });
 
 const addPropertySchema = Joi.object({
     member_id: Joi.number().greater(0),
-    location: Joi.string().required().min(2),
+    location: Joi.string().required().min(3),
     price: Joi.number().integer().greater(0),
     size: Joi.number().integer().greater(0),
     bedroom_size: Joi.number().integer().greater(0),
@@ -19,7 +19,7 @@ const addPropertySchema = Joi.object({
 });
 
 const updatePropertySchema = Joi.object({
-    location: Joi.string().required().min(2),
+    location: Joi.string().required().min(3),
     price: Joi.number().integer().greater(0),
     size: Joi.number().integer().greater(0),
     bedroom_size: Joi.number().integer().greater(0),

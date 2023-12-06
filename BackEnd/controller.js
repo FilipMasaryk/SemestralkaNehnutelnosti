@@ -2,6 +2,8 @@ const { error } = require('console')
 const pool = require('./db')
 const queries = require('./queries')
 const validationSchema = require('./validation_schema')
+const fs = require('fs');
+const path = require('path');
 
 const getMembers = (req, res) => {
     pool.query(queries.getMembers, (error, results) => {
@@ -240,6 +242,14 @@ const getPhotos = (req, res) => {
     })
 }
 
+const getPhotoById = (req, res) => {
+    const id = parseInt(req.params.id);
+    pool.query(queries.getPhotoById, [id], (error, results) => {
+        if (error) throw error;
+        res.status(200).json(results.rows);
+    })
+}
+
 const getPhotosByPropertyId = (req, res) => {
     const id = parseInt(req.params.id);
     pool.query(queries.getPhotosByPropertyId, [id], (error, results) => {
@@ -248,6 +258,7 @@ const getPhotosByPropertyId = (req, res) => {
     })
 }
 
+/*
 const addPhoto = (req, res) => {
     const { property_id, name } = req.body;
     pool.query(queries.checkPhotoNameExists, [name], (error, results) => {
@@ -276,24 +287,90 @@ const addPhoto = (req, res) => {
 }
 
 const removePhoto = (req, res) => {
-    const property_id = parseInt(req.params.id);
-    const { id } = req.body;
-    pool.query(queries.checkPropertyExists, [property_id], (error, results) => {
-        const validate = validationSchema.removePhotoSchema.validate((req.body))
-        if (validate.error) {
-            console.error(validate.error.details);
-            res.send(validate.error.details);
+    const id = parseInt(req.params.id);
+    pool.query(queries.getPhotoById, [id], (error, results) => {
+        // noPropertyFound bude true ak v results.rows.length niesu ziadne riadky
+        const noPhotoFound = !results.rows.length;
+        if (noPhotoFound) {
+            res.send("Photo does not exist in the database");
         } else {
-            pool.query(queries.checkIfPhotoExists, [id, property_id], (error, results) => {
-                if (!results.rows.length) {
-                    res.send("photo like that doesnt exist");
-                } else {
-                    pool.query(queries.removePhoto, [id, property_id], (error, results) => {
-                        if (error) throw error;
-                        res.status(201).send("photo removed successfully");
-                        console.log("photo removed successfully");
+            pool.query(queries.removePhoto, [id], (error, results) => {
+                if (error) throw error;
+                res.status(200).send("Photo removed succesfully");
+            })
+        }
+    })
+}*/
+
+
+
+const addPhoto = (req, res) => {
+    const property_id = parseInt(req.params.id);
+    const files = req.files;
+    pool.query(queries.checkPropertyExists, [property_id], (error, results) => {
+        if (!results.rows.length) {
+            files.forEach(file => {
+                fs.unlink(file.path, (err) => {
+                    if (err) {
+                        console.error(`Error deleting file ${file.path}: ${err}`);
+                    }
+                });
+            });
+            return res.status(400).send('Property with that ID doesnt exist');
+        } else {
+            if (!files || req.files.length === 0) {
+                return res.status(400).send('No files were uploaded.');
+            } else {
+                const uploadedFiles = req.files.map(file => {
+                    pool.query(queries.checkPhotoNameExists, [file.filename], (error, results) => {
+                        if (results.rows.length) {
+                            fs.unlink(file.path, (err) => {
+                                if (err) {
+                                    console.error(`Error deleting file ${file.path}: ${err}`);
+                                }
+                            });
+                            return res.status(400).send("Photo with this name already exists");
+                        } else {
+                            pool.query(queries.addPhoto, [property_id, file.filename], (error, results) => {
+                                if (error) throw error;
+                                console.log("Photo created successfully");
+                            })
+                        }
                     })
+                    return {
+                        filename: file.filename,
+                        image_url: `http://localhost:3000/images/${file.filename}`,
+                        success: ("Photo created successfully")
+                    };
+                });
+                res.status(200).json({ uploadedFiles });
+            }
+        }
+    })
+
+
+}
+
+const removePhoto = (req, res) => {
+    const id = parseInt(req.params.id);
+    pool.query(queries.getPhotoById, [id], (error, results) => {
+        // noPropertyFound bude true ak v results.rows.length niesu ziadne riadky
+        const noPhotoFound = !results.rows.length;
+        if (noPhotoFound) {
+            res.send("Photo does not exist in the database");
+        } else {
+            const photo = results.rows[0];
+            const name = photo.name;
+            const filePath = path.join(__dirname, './upload/images', name);
+            pool.query(queries.removePhoto, [id], (error, results) => {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    //res.send('File deleted successfully!');
+                } else {
+                    res.status(404).send('File not found');
                 }
+                if (error) throw error;
+                res.status(200).send("Photo removed succesfully");
             })
         }
     })
@@ -318,4 +395,7 @@ module.exports = {
     getPhotosByPropertyId,
     addPhoto,
     removePhoto,
+    //uploadPhoto,
+    getPhotoById,
+    //deletePhoto,
 }
