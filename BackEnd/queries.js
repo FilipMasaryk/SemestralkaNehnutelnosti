@@ -19,11 +19,12 @@ const addFavoriteProperty = "INSERT INTO favorite_property (member_id, property_
 const removeFavoriteProperty = "DELETE FROM favorite_property WHERE member_id = $1 AND property_id = $2";
 
 const getPhotos = "SELECT * FROM photo";
+const getPhotoById = "SELECT * FROM photo WHERE id = $1";
 const getPhotosByPropertyId = "SELECT * FROM photo WHERE property_id = $1";
 const addPhoto = "INSERT INTO photo (property_id, name, created_at) VALUES ($1, $2, NOW())";
 const checkPhotoNameExists = "SELECT p FROM photo p WHERE p.name = $1";
 const checkIfPhotoExists = "SELECT * FROM photo WHERE id = $1 AND property_id = $2";
-const removePhoto = "DELETE FROM photo WHERE id = $1 AND property_id = $2";
+const removePhoto = "DELETE FROM photo WHERE id = $1";
 
 
 module.exports = {
@@ -50,4 +51,5 @@ module.exports = {
     removePhoto,
     checkPhotoNameExists,
     checkIfPhotoExists,
+    getPhotoById,
 }
