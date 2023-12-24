@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser")
 const memberRoutes = require('./routes/memberRoutes')
 const propertyRoutes = require('./routes/propertyRoutes')
 const favorite_propertyRoutes = require('./routes/favorite_propertyRoutes')
@@ -6,12 +7,22 @@ const photoRoutes = require('./routes/photoRoutes')
 //const uploadPhotoRoutes = require('./routes/uploadPhotoRoutes')
 const path = require('path')
 const multer = require('multer')
+const cors = require('cors');
+
+
+//nastavenie options aby islo setnut cookies 
+const corsOptions = {
+    origin: true,
+    credentials: true,
+};
 
 const app = express();
-const port = 3000;
+const port = 5174;
+process.env.MY_SECRET = '123';
 
-
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/members', memberRoutes);
 app.use('/api/properties', propertyRoutes);

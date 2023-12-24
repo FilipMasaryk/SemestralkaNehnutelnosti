@@ -5,10 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { BsChevronCompactLeft, BsChevronCompactRight } from 'react-icons/bs';
 import NehnutelnostImage from './NehnutelnostImageData.ts';
 import NehnutelnostData from './NehnutelnostData.ts';
-import NehnutelnostCard from './NehnutelnostCard.tsx';
+import NehnutelnostCardFavorites from './NehnutelnostiCardFavorites.tsx';
+import MemberNehnutelnostiCard from './MemberNehnutelnostiCard.tsx';
 
-function MainPage() {
-    const [currentIndex, setCurrentIndex] = useState(0);
+function MemberNehnutelnosti() {
     const [NehnutelnostImageList, setNehnutelnostImageList] = useState<NehnutelnostImage[]>([]);
     const [NehnutelnostDataList, setNehnutelnostDataList] = useState<NehnutelnostData[]>([]);
 
@@ -18,7 +18,6 @@ function MainPage() {
             .map(image => image.name);
         return filteredImages;
     }
-
     //console.log(getStringArray(4));
     useEffect(() => {
         //console.log("AAA");
@@ -38,10 +37,11 @@ function MainPage() {
     }, [NehnutelnostDataList]);
 
     useEffect(() => {
-        fetch('http://localhost:5174/api/properties/', {
+        fetch('http://localhost:5174/api/properties/member/getMemberProperties', {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionStorage.getItem('token')
             }
         })
             .then(res => res.json())
@@ -56,11 +56,10 @@ function MainPage() {
     //console.log(NehnutelnostDataList);
     return (
         <>
-            <MainImage />
             <div className="containerCard">
                 {NehnutelnostDataList.length > 0 ? (
                     NehnutelnostDataList.map((NehnutelnostData) => (
-                        <NehnutelnostCard data={NehnutelnostData} images={getImageNames(NehnutelnostData.id)} />
+                        <MemberNehnutelnostiCard data={NehnutelnostData} images={getImageNames(NehnutelnostData.id)} />
                     ))
                 ) : (
                     <h1>No properties found</h1>
@@ -70,4 +69,4 @@ function MainPage() {
     );
 }
 
-export default MainPage;
+export default MemberNehnutelnosti

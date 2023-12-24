@@ -4,6 +4,9 @@ const queries = require('./queries')
 const validationSchema = require('./validation_schema')
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt')
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser")
 
 const getMembers = (req, res) => {
     pool.query(queries.getMembers, (error, results) => {
@@ -20,8 +23,49 @@ const getMemberById = (req, res) => {
     })
 }
 
-const addMember = (req, res) => {
+const getMemberIdByName = (req, res) => {
+    const name = req.params.name
+    //console.log(name);
+    pool.query(queries.getMemberByName, [name], (error, results) => {
+        if (!results.rows.length) {
+            res.status(401).send("Member with that name does not exist");
+        } else {
+            const member = results.rows[0];
+            const data = { id: member.id };
+            res.json(data)
+        }
+    })
+}
+const getMemberLogin = async (req, res) => {
     const { name, password } = req.body;
+    pool.query(queries.getMemberByName, [name], (error, results) => {
+        if (error) throw error;
+        if (!results.rows.length) {
+            res.status(401).send("Member with that name does not exist");
+        } else {
+            const member = results.rows[0];
+            bcrypt.compare(password, member.password)
+                .then(isMatch => {
+                    if (isMatch) {
+                        const token = jwt.sign(member, process.env.MY_SECRET, { expiresIn: "1h" })
+                        res.status(200).json({ "result": "Login successful", "token": token });
+
+                    } else {
+                        res.status(402).send("Invalid password");
+                    }
+                })
+                .catch(error => {
+                    // Handle error
+                    console.error(error);
+                    res.status(500).send("Internal Server Error");
+                });
+        }
+    })
+}
+
+const addMember = async (req, res) => {
+    const { name, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10)
     pool.query(queries.checkNameExists, [name], (error, results) => {
         const validate = validationSchema.addMemberSchema.validate((req.body))
         if (validate.error) {
@@ -29,12 +73,12 @@ const addMember = (req, res) => {
             res.send(validate.error.details);
         } else {
             if (results.rows.length) {
-                res.send("Name already exists");
+                res.status(401).send("Name already exists");
             } else {
-                pool.query(queries.addMember, [name, password], (error, results) => {
+                pool.query(queries.addMember, [name, hashedPassword], (error, results) => {
                     if (error) throw error;
                     //Ak sa member vytvoril uspesne tak posli spravu
-                    res.status(201).send("Member created successfully");
+                    res.status(200).json({ "result": "Member created successfully" });
                     console.log("Member created successfully");
                 })
             }
@@ -102,9 +146,17 @@ const getPropertyById = (req, res) => {
         res.status(200).json(results.rows);
     })
 }
+const getProperteisByMemberId = (req, res) => {
+    const member_id = req.member.id
+    pool.query(queries.getProperteisByMemberId, [member_id], (error, results) => {
+        if (error) throw error;
+        res.status(200).json(results.rows);
+    })
+}
 
 const addProperty = (req, res) => {
-    const { member_id, location, price, size, bedroom_size, phone_number } = req.body;
+    const { bedroom_size, location, phone_number, price, size } = req.body;
+    const member_id = req.member.id
     pool.query(queries.getMemberById, [member_id], (error, results) => {
         const validate = validationSchema.addPropertySchema.validate((req.body))
         if (validate.error) {
@@ -112,13 +164,22 @@ const addProperty = (req, res) => {
             res.send(validate.error.details);
         } else {
             if (!results.rows.length) {
-                res.send("Member with that id doesnt exist");
+                res.status(401).send("Member with that id doesnt exist");
             } else {
                 pool.query(queries.addProperty, [member_id, location, price, size, bedroom_size, phone_number], (error, results) => {
                     if (error) throw error;
+                    const newPropertyId = results.rows[0].id;
+                    //console.log(newPropertyId);
                     //Ak sa property vytvorila uspesne tak posli spravu
-                    res.status(201).send("Property created successfully");
-                    console.log("Property created successfully");
+
+                    const responseMessage = {
+                        status: 201,
+                        message: "Property created successfully",
+                        newPropertyId: newPropertyId
+                    };
+
+                    res.status(201).send(responseMessage);
+                    console.log(responseMessage.message);
                 })
             }
         }
@@ -136,7 +197,7 @@ const removeProperty = (req, res) => {
         } else {
             pool.query(queries.removeProperty, [id], (error, results) => {
                 if (error) throw error;
-                res.status(200).send("Property removed succesfully");
+                res.status(201).send("Property removed succesfully");
             })
         }
     })
@@ -167,9 +228,25 @@ const updateProperty = (req, res) => {
 }
 
 
-const getFavoritePropertyByMemberId = (req, res) => {
-    const id = parseInt(req.params.id);
-    pool.query(queries.getFavoritePropertyByMemberId, [id], (error, results) => {
+const getFavoritePropertyByPropertyIdAndMemberId = (req, res) => {
+    const property_id = parseInt(req.params.id);
+    const member_id = req.member.id
+    pool.query(queries.getFavoritePropertyByPropertyIdAndMemberId, [member_id, property_id], (error, results) => {
+        if (error) {
+            throw error;
+        }
+
+        if (!results.rows.length) {
+            res.status(201).send("Favorite property with that id does not exist");
+        } else {
+            res.status(202).send("Favorite property with that id exists");
+        }
+    })
+}
+
+const getFavoritePropertiesByMemberId = (req, res) => {
+    const member_id = req.member.id
+    pool.query(queries.getFavoritePropertiesByMemberId, [member_id], (error, results) => {
         if (error) throw error;
         res.status(200).json(results.rows);
     })
@@ -183,7 +260,7 @@ const getFavoriteProperties = (req, res) => {
 }
 
 const addFavoriteProperty = (req, res) => {
-    const member_id = parseInt(req.params.id);
+    const member_id = req.member.id
     const { property_id } = req.body;
     pool.query(queries.checkPropertyExists, [property_id], (error, results) => {
         const validate = validationSchema.addFavoritePropertySchema.validate((req.body))
@@ -212,7 +289,7 @@ const addFavoriteProperty = (req, res) => {
 }
 
 const removeFavoriteProperty = (req, res) => {
-    const member_id = parseInt(req.params.id);
+    const member_id = req.member.id
     const { property_id } = req.body;
     pool.query(queries.checkPropertyExists, [property_id], (error, results) => {
         const validate = validationSchema.addFavoritePropertySchema.validate((req.body))
@@ -232,6 +309,13 @@ const removeFavoriteProperty = (req, res) => {
                 }
             })
         }
+    })
+}
+
+const removeAllFavoritePropertiesByPropertyId = (req, res) => {
+    const property_id = parseInt(req.params.id);
+    pool.query(queries.removeAllFavoritePropertiesByPropertyId, [property_id], (error, results) => {
+        res.status(201).send("Favorite properties removed succesfully");
     })
 }
 
@@ -305,6 +389,7 @@ const removePhoto = (req, res) => {
 
 
 const addPhoto = (req, res) => {
+    console.log("AAAA");
     const property_id = parseInt(req.params.id);
     const files = req.files;
     pool.query(queries.checkPropertyExists, [property_id], (error, results) => {
@@ -316,10 +401,10 @@ const addPhoto = (req, res) => {
                     }
                 });
             });
-            return res.status(400).send('Property with that ID doesnt exist');
+            return res.status(401).send('Property with that ID doesnt exist');
         } else {
             if (!files || req.files.length === 0) {
-                return res.status(400).send('No files were uploaded.');
+                return res.status(402).send('No files were uploaded.');
             } else {
                 const uploadedFiles = req.files.map(file => {
                     pool.query(queries.checkPhotoNameExists, [file.filename], (error, results) => {
@@ -329,7 +414,8 @@ const addPhoto = (req, res) => {
                                     console.error(`Error deleting file ${file.path}: ${err}`);
                                 }
                             });
-                            return res.status(400).send("Photo with this name already exists");
+                            console.log("Photo with this name already exists");
+                            return res.status(403).send("Photo with this name already exists");
                         } else {
                             pool.query(queries.addPhoto, [property_id, file.filename], (error, results) => {
                                 if (error) throw error;
@@ -339,7 +425,7 @@ const addPhoto = (req, res) => {
                     })
                     return {
                         filename: file.filename,
-                        image_url: `http://localhost:3000/images/${file.filename}`,
+                        image_url: `http://localhost:5174/images/${file.filename}`,
                         success: ("Photo created successfully")
                     };
                 });
@@ -376,6 +462,29 @@ const removePhoto = (req, res) => {
     })
 }
 
+const removePropertyPhotos = (req, res) => {
+    const property_id = parseInt(req.params.id);
+    pool.query(queries.getPhotosByPropertyId, [property_id], (error, results) => {
+        // noPropertyFound bude true ak v results.rows.length niesu ziadne riadky
+        const photos = results.rows;
+        if (photos.length === 0) {
+            res.send("Photo does not exist in the database");
+            return;
+        }
+        for (let i = 0; i < photos.length; i++) {
+            const photo = results.rows[i];
+            const name = photo.name;
+            const filePath = path.join(__dirname, './upload/images', name);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+        pool.query(queries.removeAllPhotosByPropertyId, [property_id], (error, results) => {
+            res.status(201).send("Photos removed succesfully");
+        })
+    })
+}
+
 module.exports = {
     getMembers,
     getMemberById,
@@ -389,7 +498,6 @@ module.exports = {
     updateProperty,
     removeFavoriteProperty,
     addFavoriteProperty,
-    getFavoritePropertyByMemberId,
     getFavoriteProperties,
     getPhotos,
     getPhotosByPropertyId,
@@ -398,4 +506,11 @@ module.exports = {
     //uploadPhoto,
     getPhotoById,
     //deletePhoto,
+    getMemberLogin,
+    getMemberIdByName,
+    getFavoritePropertyByPropertyIdAndMemberId,
+    getFavoritePropertiesByMemberId,
+    getProperteisByMemberId,
+    removePropertyPhotos,
+    removeAllFavoritePropertiesByPropertyId,
 }
