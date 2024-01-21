@@ -8,9 +8,9 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 const schema = Joi.object({
     pridanieLokalita: Joi.string().required().min(3).label("Lokalita"),
-    pridanieCena: Joi.number().integer().required().greater(0).label("Cena v €"),
-    pridanieVelkost: Joi.number().required().integer().greater(0).label("Veľkosť v m2"),
-    pridanieIzby: Joi.number().integer().required().greater(0).label("Počet izieb"),
+    pridanieCena: Joi.number().integer().required().greater(0).less(1000000000).label("Cena v €"),
+    pridanieVelkost: Joi.number().required().integer().greater(0).less(1000000000).label("Veľkosť v m2"),
+    pridanieIzby: Joi.number().integer().required().greater(0).less(1000000000).label("Počet izieb"),
     pridanieTelcislo: Joi.string().length(10).required().label("Kontakt"),
 });
 

@@ -12,17 +12,14 @@ const updateMemberSchema = Joi.object({
 const addPropertySchema = Joi.object({
     member_id: Joi.number().greater(0),
     location: Joi.string().required().min(3),
-    price: Joi.number().integer().greater(0),
-    size: Joi.number().integer().greater(0),
-    bedroom_size: Joi.number().integer().greater(0),
+    price: Joi.number().integer().greater(0).less(1000000000),
+    size: Joi.number().integer().less(1000000000).greater(0),
+    bedroom_size: Joi.number().less(1000000000).integer().greater(0),
     phone_number: Joi.string().length(10),
 });
 
 const updatePropertySchema = Joi.object({
-    location: Joi.string().required().min(3),
-    price: Joi.number().integer().greater(0),
-    size: Joi.number().integer().greater(0),
-    bedroom_size: Joi.number().integer().greater(0),
+    price: Joi.number().integer().greater(0).less(1000000000),
     phone_number: Joi.string().length(10),
 });
 

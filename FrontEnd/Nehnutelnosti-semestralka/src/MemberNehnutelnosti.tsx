@@ -53,7 +53,6 @@ function MemberNehnutelnosti() {
             });
     }, []);
 
-    //console.log(NehnutelnostDataList);
     return (
         <>
             <div className="containerCard">

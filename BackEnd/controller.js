@@ -47,8 +47,43 @@ const getMemberLogin = async (req, res) => {
             bcrypt.compare(password, member.password)
                 .then(isMatch => {
                     if (isMatch) {
-                        const token = jwt.sign(member, process.env.MY_SECRET, { expiresIn: "1h" })
+                        const token = jwt.sign({
+                            name: member.name,
+                            id: member.id
+                        }, process.env.MY_SECRET, { expiresIn: "1h" })
                         res.status(200).json({ "result": "Login successful", "token": token });
+
+                    } else {
+                        res.status(402).send("Invalid password");
+                    }
+                })
+                .catch(error => {
+                    // Handle error
+                    console.error(error);
+                    res.status(500).send("Internal Server Error");
+                });
+        }
+    })
+}
+
+const changeMemberPassword = async (req, res) => {
+    const id = req.params.id
+    const password = req.body.password;
+    const newPassword = req.body.newPassword;
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    pool.query(queries.getMembersPassword, [id], (error, results) => {
+        if (error) throw error;
+        if (!results.rows.length) {
+            res.status(401).send("Member with that id does not exist");
+        } else {
+            const originalPasswordObject = results.rows[0];
+            const originalPassword = originalPasswordObject.password;
+            bcrypt.compare(password, originalPassword)
+                .then(isMatch => {
+                    if (isMatch) {
+                        pool.query(queries.updateMember, [hashedPassword, id], (error, results) => {
+                            res.status(201).send("Password updated succesfully");
+                        })
 
                     } else {
                         res.status(402).send("Invalid password");
@@ -102,6 +137,7 @@ const removeMember = (req, res) => {
     })
 }
 
+/*
 const updateMember = (req, res) => {
     const id = parseInt(req.params.id);
     const { name } = req.body;
@@ -130,7 +166,7 @@ const updateMember = (req, res) => {
             })
         }
     })
-}
+}*/
 
 const getProperties = (req, res) => {
     pool.query(queries.getProperties, (error, results) => {
@@ -210,17 +246,16 @@ const updateProperty = (req, res) => {
     pool.query(queries.getPropertyById, [id], (error, results) => {
         const noPropertyFound = !results.rows.length;
         if (noPropertyFound) {
-            res.send("Property does not exist in the database");
+            res.status(401).send("Property does not exist in the database");
         } else {
             const validate = validationSchema.updatePropertySchema.validate((req.body))
             if (validate.error) {
                 console.error(validate.error.details);
-                res.send(validate.error.details);
+                res.status(402).send(validate.error.details);
             } else {
-                pool.query(queries.updateProperty, [updatedEntity.location, updatedEntity.price, updatedEntity.size,
-                updatedEntity.bedroom_size, updatedEntity.phone_number, id], (error, results) => {
+                pool.query(queries.updateProperty, [updatedEntity.price, updatedEntity.phone_number, id], (error, results) => {
                     if (error) throw error;
-                    res.status(200).send("Property updated succesfully");
+                    res.status(201).send("Property updated succesfully");
                 })
             }
         }
@@ -485,12 +520,20 @@ const removePropertyPhotos = (req, res) => {
     })
 }
 
+const searchProperties = (req, res) => {
+    const searchText = req.params.string;
+    //console.log(searchText);
+    pool.query(queries.searchProperties, [searchText], (error, results) => {
+        if (error) throw error;
+        res.status(201).json(results.rows);
+    })
+}
+
 module.exports = {
     getMembers,
     getMemberById,
     addMember,
     removeMember,
-    updateMember,
     getProperties,
     getPropertyById,
     addProperty,
@@ -513,4 +556,6 @@ module.exports = {
     getProperteisByMemberId,
     removePropertyPhotos,
     removeAllFavoritePropertiesByPropertyId,
+    changeMemberPassword,
+    searchProperties
 }

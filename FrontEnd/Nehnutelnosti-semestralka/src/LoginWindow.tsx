@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi';
 import Joi from 'joi';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
+import { authContext } from './App';
 
 
 const schema = Joi.object({
@@ -19,6 +20,10 @@ interface FormData {
 }
 
 function LoginWindow() {
+  const { setAuthenticated } = useContext(authContext);
+  const handleLogin = () => setAuthenticated(true);
+  const handleLogout = () => setAuthenticated(false);
+
   const { register, handleSubmit, formState: { errors, isValid } } = useForm<FormData>({ resolver: joiResolver(schema) });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -63,6 +68,7 @@ function LoginWindow() {
         console.log(resultObject.result);
         setError(null);
         sessionStorage.setItem('token', resultObject.token);
+        handleLogin();
         notifySuccessfulLogin();
         navigate('/');
 

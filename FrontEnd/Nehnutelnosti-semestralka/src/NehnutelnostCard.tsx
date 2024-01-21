@@ -1,10 +1,11 @@
 import Navbar from './Navbar.tsx'
 import MainImage from './MainImage.tsx'
 import { Route, Routes } from 'react-router-dom'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { BsChevronCompactLeft, BsChevronCompactRight } from 'react-icons/bs';
 import NehnutelnostData from './NehnutelnostData.ts';
 import NehnutelnostCardImages from './NehnutelnostCardImages.tsx';
+import { authContext } from './App.tsx';
 
 interface NehnutelnostCardProps {
     data: NehnutelnostData,
@@ -14,6 +15,8 @@ interface NehnutelnostCardProps {
 function NehnutelnostCard(props: NehnutelnostCardProps) {
     const [isOn, setIsOn] = useState(false);
     const [isTokenPresent, setIsTokenPresent] = useState<boolean>(false);
+    const { authenticated } = useContext(authContext);
+
 
     useEffect(() => {
         const token = sessionStorage.getItem('token');
@@ -94,9 +97,14 @@ function NehnutelnostCard(props: NehnutelnostCardProps) {
                     <p>{props.data.size}m2 {props.data.bedroom_size} izby</p>
                     <div className="flex-parent-element">
                         <div className="contact" style={{ flex: 1 }}><i className="fa fa-phone"></i> {props.data.phone_number}</div>
-                        <button className={isOn && isTokenPresent ? 'buttonOblubeneOn' : 'buttonOblubeneOff'} onClick={handleClick} disabled={!isTokenPresent}>
-                            <i className="fa fa-thumbs-o-up"></i>
-                        </button>
+                        {authenticated ? (
+                            <button className={isOn && isTokenPresent ? 'buttonOblubeneOn' : 'buttonOblubeneOff'} onClick={handleClick} disabled={!isTokenPresent}>
+                                <i className="fa fa-thumbs-o-up"></i>
+                            </button>
+                        ) : (
+                            null
+                        )}
+
                     </div>
                 </div>
             </div>

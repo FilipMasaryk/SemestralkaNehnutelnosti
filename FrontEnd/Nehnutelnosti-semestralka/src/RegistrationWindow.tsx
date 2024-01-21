@@ -35,6 +35,11 @@ function RegistrationWindow() {
         });
     }
 
+    const handleLinkClick = () => {
+        // Redirect to the home page
+        navigate('/prihlasenie');
+    };
+
     function registerMember(meno: string, heslo: string, potvrdenieHesla: string) {
 
         const newMember = {
@@ -56,7 +61,7 @@ function RegistrationWindow() {
             }
             res.json().then((resultObject) => {
                 notifySuccessfulRegister();
-                navigate('/')
+                navigate('/prihlasenie')
                 console.log(resultObject.result);
             })
             return res.json;
@@ -94,7 +99,15 @@ function RegistrationWindow() {
                         {error && <p className='text-danger'>{error}</p>}
                         <button type="submit" className='registerbtn'>Registrovať</button>
 
-                        <p className="uzZaregistrovany">Ste už zaregistrovaný? <a href="#prihlasenie">Prihláste sa</a>.</p>
+                        <div>
+                            <p className="uzZaregistrovany">
+                                Ste už zaregistrovaný?{' '}
+                                <span role="link" tabIndex={0} className="clickable-text" onClick={handleLinkClick}>
+                                    Prihláste sa
+                                </span>
+                                .
+                            </p>
+                        </div>
                     </div>
 
                 </form>

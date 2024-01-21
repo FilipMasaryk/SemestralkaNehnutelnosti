@@ -55,12 +55,7 @@ h1 {
   background-position: center;
 }
 
-.container {
-  position: relative;
-  width: 100%;
-  padding-left: 0;
-  padding-right: 0;
-}
+
 
 
 .centered {
@@ -114,14 +109,14 @@ input[type=textImage] {
 .cardPicture {
   width: 100%;
   border-radius: 12px;
-  height: 250px;
+  height: 350px;
   object-fit: cover;
 }
 
 .containerCard {
   display: grid;
   width: 99%;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 7px;
   margin: 0 auto;
 }
@@ -197,8 +192,8 @@ p {
   padding: 6px 6px 6px 10px;
   font-weight: 600;
   color: black;
-  font-size: 17px;
-  background-color: whitesmoke;
+  font-size: 0px;
+  background-color: #16AFC4;
   display: block;
   cursor: pointer;
 }
@@ -305,7 +300,7 @@ a {
 
 .arrow-left {
   position: absolute;
-  top: 33%;
+  top: 36%;
   left: 1px;
   transform: translate(0, -50%);
   padding: 10px;
@@ -317,7 +312,7 @@ a {
 
 .arrow-right {
   position: absolute;
-  top: 33%;
+  top: 36%;
   right: 1px;
   transform: translate(0, -50%);
   padding: 10px;
@@ -327,13 +322,60 @@ a {
   cursor: pointer;
 }
 
+.modal {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: fixed;
+  z-index: 2;
+}
+
+.overlay {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: fixed;
+  background: rgba(49, 49, 49, 0.8);
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.containerEditWindow {
+  position: relative;
+  width: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.containerEdit {
+  width: 100%;
+  margin: 10px auto;
+  padding: 16px;
+  background-color: white;
+  height: auto;
+  border: 2px solid #16AFC4;
+}
+
+.clickable-text {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 @media screen and (min-width: 720px) {
   .loginAndRegister {
     float: right;
   }
 }
 
-@media screen and (max-width: 719px) {
+@media screen and (max-width: 775px) {
   .topnav a {
     float: none;
     display: none;
@@ -346,6 +388,10 @@ a {
 
   .containerRegistration {
     width: 70%;
+  }
+
+  .containerEditWindow {
+    width: 40%;
   }
 }
 
@@ -368,19 +414,19 @@ a {
   }
 }
 
-@media screen and (max-width: 1000px) {
-  .containerCard {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
-
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 1100px) {
   .containerCard {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 550px) {
+  .containerEditWindow {
+    width: 60%;
+  }
+}
+
+@media screen and (max-width: 700px) {
   .containerCard {
     grid-template-columns: 1fr;
   }

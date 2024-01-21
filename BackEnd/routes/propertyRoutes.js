@@ -9,6 +9,7 @@ router.get('/:id', controller.getPropertyById);
 router.get('/member/getMemberProperties', sessionJwtAuth, controller.getProperteisByMemberId);
 router.post("/", sessionJwtAuth, controller.addProperty);
 router.delete('/:id', sessionJwtAuth, controller.removeProperty);
-router.put('/:id', controller.updateProperty);
+router.put('/:id', sessionJwtAuth, controller.updateProperty);
+router.get('/search/:string', controller.searchProperties);
 
 module.exports = router;

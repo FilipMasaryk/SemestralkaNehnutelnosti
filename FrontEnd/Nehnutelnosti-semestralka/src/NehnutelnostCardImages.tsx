@@ -52,7 +52,7 @@ function NehnutelnostCardImages(props: NehnutelnostCardImagesProps) {
             ) : null}
 
             {props.images.length === 0 ? (
-                <img src="/images/NoImage.jpg" className='cardPicture' />
+                <img src="/images/Sale1.jpg" className='cardPicture' />
             ) : null}
         </>
     );
